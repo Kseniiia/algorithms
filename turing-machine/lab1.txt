@@ -1,0 +1,65 @@
+# task 1
+
+input: '11010a1'
+blank: ' '
+start state: s1
+table:
+  s1:
+    [0, 1, a]: {R: q1}
+  q1:
+    1: {write: 0, R: q1}
+    0: {write: 1, R: q1}
+    a: {write: 1, R: qz}
+  qz:
+
+# task 2
+
+input: '10a0110aa1'
+blank: ' '
+start state: s1
+table:
+  s1:
+    [a, 0, 1]: {R: s2}
+  s2:
+    [a, 0, 1]: {R: s3}
+  s3:
+    [a, 0, 1]: {R: s4}
+  s4:
+    [a, 0, 1]: {R: q1}
+    
+  q1:
+    a: {write: a, R: q2}
+    1: {write: a, R: q1}
+    0: {write: 1, R: q1}
+  q2:
+    a: {write: a, R: q3}
+    1: {write: 1, R: q3}
+    0: {write: 0, R: q3}
+  q3:
+    a: {write: a, R: q4}
+    1: {write: a, R: q4}
+    0: {write: 1, R: q4}
+  q4:
+    a: {write: a, R: qz}
+    1: {write: 1, L: q4}
+    0: {write: 0, L: q1}
+  qz:
+
+# task 3
+
+input: 'cabdabda'
+blank: ' '
+start state: q1
+table:
+  q1:
+    [a, b, c, d]: {R: q2}
+  q2:
+    a: {write: d, R: q3}
+  q3:
+    [a, b, c, d]: {R: q3}
+    ' ': {L: q4}
+  q4:
+    [a, b, c, d]: {L: q5}
+  q5:
+    d: {write: a, R: qz}
+  qz:

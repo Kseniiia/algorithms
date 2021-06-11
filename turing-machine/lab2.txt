@@ -1,0 +1,31 @@
+# n*m
+input: '1111*111'
+blank: ' '
+start state: q1
+table:
+  q1:
+    1  : {write: x, R: q2}
+    '*': {R: q6}
+  q2:
+    1  : {R: q2}
+    '*': {R: q3}
+  q3:
+    x  : {R: q3}
+    1  : {write: x, L: q4}
+    ' ': {L: q9}
+  q4:
+    x  : {L: q4}
+    '*': {L: q5}
+  q5:
+    1: {L: q5}
+    x: {R: q1}
+  q6:
+    x  : {R: q6}
+    ' ': {L: q7}
+    1  : {R: q8}
+  q7:
+    # n = m
+  q8:
+    # n < m
+  q9:
+    # n > m
