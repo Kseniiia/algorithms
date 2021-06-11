@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<meta charset=utf-8 />
+	<meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
+	<title>Реберная раскраска графа - Ксения Мальчикова</title>
+	<style>
+		#graph {
+			height: 70%;
+			width: 100%;
+			position: absolute;
+			left: 0;
+			top: 15%;
+		}
+	</style>
+</head>
+<body>
+	<h2 style="text-align: center;">
+		Реберная раскраска графа
+	</h2>
+	
+	<div id="graph"></div>
+	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.17.0/cytoscape.min.js"></script>
+	<script>
+		/* Граф представленный списком смежности */
+		
+		class Graph {
+			constructor() 
+			{
+				this.edges = {};  // ребра
+				this.colors = {}; // цвета
+				this.nodes = [];  // вершины
+			}
+			addNode(node) // добавление вершины
+			{
+				this.nodes.push(node);
+				this.edges[node] = [];
+				this.colors[node] = -1;
+			}
+			addEdge(node1, node2) //добавление ребра
+			{
+				if(node1 !== node2)
+				{
+					this.edges[node1].push(node2);
+					this.edges[node2].push(node1);
+				}
+			}
+			getAdjacencyList(node) {
+				return this.edges[node]
+			}
+			getNodes() {
+				return this.nodes;
+			}
+			displayGraph() // отображение графа
+			{
+				console.log(this.nodes.reduce((text,node) => text += (node + " -> " + this.edges[node].map(n => n).join(", ") + "\n") , ""))
+			}
+			displayColors() // отображение раскраски графа
+			{
+				let colors = ["Цвет 1", "Цвет 2", "Цвет 3", "Цвет 4", "Цвет 5", "Цвет 6", "Цвет 7", "Цвет 8", "Цвет 9", "Цвет 10"]
+				let graph = "";
+				this.nodes.forEach(node => 
+				{
+					Object.values(this.colors).reduce((a,b) => a > b ? a : b , 0) <= 7 ? // <= 8 colors
+					graph += node + " -> " + colors[this.colors[node]] + "\n" :
+					graph += node + " -> " + this.colors[node] + "\n";
+				});
+				console.log(graph);
+			}
+		}
+		
+		// Алгоритм раскраски графа
+		
+		function color(graph)
+		{
+			graph.nodes.forEach(
+				node => graph.colors[node] = 
+					graph.edges[node]
+						.map(x => graph.colors[x])
+						.filter(color => color >= 0)
+						.sort((a,b) => a-b)
+						.reduce((current,next) => current === next ? current+=1 : current , 0)
+			)
+			return graph;
+		}
+		
+		// Создание графа
+		
+		console.log('Граф:');
+		
+		let graph = new Graph();
+		
+		graph.addNode('a');
+		graph.addNode('b');
+		graph.addNode('c');
+		graph.addNode('d');
+		
+		graph.addEdge('a', 'b');
+		graph.addEdge('a', 'c');
+		graph.addEdge('a', 'd');
+		graph.addEdge('b', 'c');
+		graph.addEdge('b', 'd');
+		
+		graph.displayGraph();
+		
+		// Нахождение ребер графа
+		
+		console.log('Ребра графа:')
+		
+		let nodes = graph.getNodes();
+		let edges = [];
+		
+		for (let i = 0; i < nodes.length; i++) {
+			const adjacencyList = graph.getAdjacencyList(nodes[i]);
+			for (let j = 0; j < adjacencyList.length; j++) {
+				let edge = [nodes[i], adjacencyList[j]].sort();
+				
+				let exists = false;
+				for (let k = 0; k < edges.length; k++) {
+					if (edges[k][0] == edge[0] && edges[k][1] == edge[1]) {
+						exists = true;
+						break;
+					}
+				}
+				
+				if (!exists) {
+					console.log((edges.length + 1) + ' = (' + edge[0] + ', ' + edge[1] + ')');
+					edges.push(edge);
+				}
+			}
+		}
+		
+		// Построение двойственного графа
+		
+		console.log('Двойственный граф:');
+		
+		let dual = new Graph();
+		
+		for (let i = 0; i < edges.length; i++) {
+			dual.addNode(i + 1);
+		}
+		
+		for (let i = 0; i < edges.length; i++) {
+			for (let j = i + 1; j < edges.length; j++) {
+				if (edges[i][0] == edges[j][0] || edges[i][0] == edges[j][1] || edges[i][1] == edges[j][0] || edges[i][1] == edges[j][1]) {
+					dual.addEdge(i + 1, j + 1);
+				}
+			}
+		}
+		
+		dual.displayGraph();
+		
+		// Раскраска двойственного графа
+		
+		console.log("Раскрашенный двойственный граф:")
+		
+		color(dual);
+		dual.displayColors();
+		
+		// Визуализация реберной раскраски
+		
+		var cy = cytoscape({
+			container: document.getElementById('graph'),
+
+			boxSelectionEnabled: false,
+			autounselectify: true,
+
+			style: cytoscape.stylesheet()
+							.selector('node')
+							.style({
+								'content': 'data(id)'
+							})
+							.selector('edge')
+							.style({
+								'content': 'data(id)',
+								'width': 4,
+								'line-color': '#ddd',
+								'target-arrow-color': '#ddd'
+							})
+							.selector('.color1')
+							.style({
+								'line-color': '#168aad'
+							})
+							.selector('.color2')
+							.style({
+								'line-color': '#e76f51'
+							})
+							.selector('.color3')
+							.style({
+								'line-color': '#06d6a0'
+							}),
+				
+			elements: {
+				nodes: [
+					{ data: { id: 'a' } },
+					{ data: { id: 'b' } },
+					{ data: { id: 'c' } },
+					{ data: { id: 'd' } }
+				],
+				
+				edges: [
+					{ data: { id: '1',  source: 'a', target: 'b', weight: 1 } },
+					{ data: { id: '2',  source: 'a', target: 'c', weight: 1 } },
+					{ data: { id: '3',  source: 'a', target: 'd', weight: 1 } },
+					{ data: { id: '4',  source: 'b', target: 'c', weight: 1 } },
+					{ data: { id: '5',  source: 'b', target: 'd', weight: 1 } }
+				]
+			},
+			
+			layout: {
+				name: 'breadthfirst',
+				directed: false,
+				roots: '#c',
+				padding: 10
+			}
+		});
+		
+		edges = cy.filter('edge');
+		
+		edges[0].addClass('color1');
+		edges[1].addClass('color2');
+		edges[2].addClass('color3');
+		edges[3].addClass('color3');
+		edges[4].addClass('color2');
+	</script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<meta charset=utf-8 />
+	<meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
+	<title>Поиск в глубину - Ксения Мальчикова</title>
+	<style>
+		#graph {
+			height: 70%;
+			width: 100%;
+			position: absolute;
+			left: 0;
+			top: 15%;
+		}
+	</style>
+</head>
+<body>
+	<pre id="task">
+		Дан ориентированный граф.
+		
+		1. Задать данный граф в виде структуры смежности. 
+		2. Организовать на графе поиск в глубину, изобразить результирующее дерево поиска. 
+	</pre>
+	
+	<div id="graph"></div>
+	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.17.0/cytoscape.min.js"></script>
+	<script>
+		/* Списки смежности */
+		
+		class Graph {
+			constructor() {
+				this.adjacencyList = {}
+			}
+
+			addVertex(vertex) {
+				if (!this.adjacencyList[vertex]) this.adjacencyList[vertex] = []
+			}
+			
+			addEdge(vertex1, vertex2) {
+				this.adjacencyList[vertex1].push(vertex2)
+			}
+			
+			getAdjacencyList(vertex) {
+				return this.adjacencyList[vertex]
+			}
+			
+			removeEdge(vertex1, vertex2) {
+				this.adjacencyList[vertex1] = this.adjacencyList[vertex1].filter(
+					v => v !== vertex2
+				)
+				
+				this.adjacencyList[vertex2] = this.adjacencyList[vertex2].filter(
+					v => v !== vertex1
+				)  
+			}
+			
+			removeVertex(vertex) {
+				let edges = this.adjacencyList[vertex]
+				
+				for (let edge of edges) {
+					this.removeEdge(vertex, edge)
+				}
+				
+				delete this.adjacencyList[vertex]
+			}
+			
+			print() {
+				console.log('Список смежности:')
+				
+				for (let vertex in this.adjacencyList) {
+					let edges = this.adjacencyList[vertex]
+					
+					console.log(vertex + ': ' + edges)
+				}
+			}
+		}
+		
+		let graph = new Graph();
+		
+		graph.addVertex(1);
+		graph.addVertex(2);
+		graph.addVertex(3);
+		graph.addVertex(4);
+		graph.addVertex(5);
+		graph.addVertex(6);
+		graph.addVertex(7);
+		
+		graph.addEdge(1, 2);
+		graph.addEdge(1, 4);
+		graph.addEdge(2, 5);
+		graph.addEdge(3, 2);
+		graph.addEdge(3, 7);
+		graph.addEdge(4, 3);
+		graph.addEdge(4, 5);
+		graph.addEdge(5, 6);
+		graph.addEdge(6, 7);
+		graph.addEdge(7, 3);
+		graph.addEdge(7, 4);
+		
+		graph.print();
+		
+		/* Поиск в глубину */
+		
+		let visited = {};
+		let stack = [];
+		
+		const depthFirstSearch = (node) => { 
+     		stack.push(node);
+     		while (stack.length != 0) {
+        		node = stack.pop();
+        		if (!visited[node]) {
+           			visited[node] = true;
+           			console.log(`Вершина ${node}`)
+           			const adjacencyList = graph.getAdjacencyList(node);
+					for (let i = 0; i < adjacencyList.length; i++) {
+                  		stack.push(adjacencyList[i]);
+            		}
+       			}
+     		}
+		}
+		
+		console.log('Обход в глубину:')
+		depthFirstSearch(1);
+		
+		/* Визуализация графа */
+		
+		var cy = cytoscape({
+			container: document.getElementById('graph'),
+
+			boxSelectionEnabled: false,
+			autounselectify: true,
+
+			style: cytoscape.stylesheet()
+							.selector('node')
+							.style({
+								'content': 'data(id)'
+							})
+							.selector('edge')
+							.style({
+								'curve-style': 'bezier',
+								'target-arrow-shape': 'triangle',
+								'opacity': 0.5
+							})
+							.selector('.highlighted')
+							.style({
+								'background-color': '#61bffc',
+								'line-color': '#61bffc',
+								'target-arrow-color': '#61bffc',
+								'transition-property': 'background-color, line-color, target-arrow-color',
+								'transition-duration': '0.5s'
+							}),
+				
+			elements: {
+				nodes: [
+					{ data: { id: '1' } },
+					{ data: { id: '2' } },
+					{ data: { id: '3' } },
+					{ data: { id: '4' } },
+					{ data: { id: '5' } },
+					{ data: { id: '6' } },
+					{ data: { id: '7' } },
+				],
+				
+				edges: [
+					{ data: { id: 'e1',  source: '1', target: '2' } },
+					{ data: { id: 'e2',  source: '1', target: '4' } },
+					{ data: { id: 'e3',  source: '2', target: '5' } },
+					{ data: { id: 'e4',  source: '3', target: '2' } },
+					{ data: { id: 'e5',  source: '3', target: '7' } },
+					{ data: { id: 'e6',  source: '4', target: '3' } },
+					{ data: { id: 'e7',  source: '4', target: '5' } },
+					{ data: { id: 'e8',  source: '5', target: '6' } },
+					{ data: { id: 'e9',  source: '6', target: '7' } },
+					{ data: { id: 'e10', source: '7', target: '3' } },
+					{ data: { id: 'e11', source: '7', target: '4' } }
+				]
+			},
+
+			layout: {
+				name: 'breadthfirst',
+				directed: true,
+				roots: '#1',
+				padding: 10
+			}
+		});
+		
+		/* Визуализация обхода графа, используя поиск в глубину */
+		
+		var dfs = cy.elements().dfs({
+			root: '#1',
+			visit: function(v, e, u, i, depth) {},
+			directed: true
+		});
+
+		var i = 0;
+		var highlight = function() {
+			if (i < dfs.path.length) {
+				dfs.path[i].addClass('highlighted');
+
+				i++;
+				setTimeout(highlight, 1000);
+			}
+		};
+
+		highlight();
+	</script>
+</body>
+</html>
