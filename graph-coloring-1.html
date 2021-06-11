@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset=utf-8>
+	<meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
+	<title>Раскраска графа (жадный алгоритм) - Ксения Мальчикова</title>
+	<style>
+		#graph {
+			height: 70%;
+			width: 100%;
+			position: absolute;
+			left: 0;
+			top: 15%;
+		}
+	</style>
+</head>
+<body>
+	<pre id="task">
+		Раскраска графа жадным алгоритмом
+	</pre>
+	
+	<div id="graph"></div>
+	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.17.0/cytoscape.min.js"></script>
+	<script>
+		class Graph
+		{
+			constructor() 
+			{
+				this.edges = {};  // ребра
+				this.colors = {}; // цвета
+				this.nodes = [];  // вершины
+			}
+			addNode(node) // добавление вершины
+			{
+				this.nodes.push(node);
+				this.edges[node] = [];
+				this.colors[node] = -1;
+			}
+			addEdge(node1, node2) //добавление ребра
+			{
+				if(node1 !== node2)
+				{
+					this.edges[node1].push(node2);
+					this.edges[node2].push(node1);
+				}
+			}
+			displayGraph() // отображение графа
+			{
+				console.log("Граф:")
+				console.log(this.nodes.reduce((text,node) => text += (node + " -> " + this.edges[node].map(n => n).join(", ") + "\n") , ""))
+			}
+			displayColors() // отображение раскраски графа
+			{
+				let colors = ["Цвет 1", "Цвет 2", "Цвет 3", "Цвет 4", "Цвет 5", "Цвет 6", "Цвет 7", "Цвет 8", "Цвет 9", "Цвет 10"]
+				let graph = "";
+				console.log("Раскрашенный граф:")
+				this.nodes.forEach(node => 
+				{
+					Object.values(this.colors).reduce((a,b) => a > b ? a : b , 0) <= 7 ? // <= 8 colors
+					graph += node + " -> " + colors[this.colors[node]] + "\n" :
+					graph += node + " -> " + this.colors[node] + "\n";
+				});
+				console.log(graph);
+			}
+		}
+		
+		// Алгоритм раскраски графа
+		function color(graph)
+		{
+			graph.nodes.forEach(
+				node => graph.colors[node] = 
+					graph.edges[node]
+						.map(x => graph.colors[x])
+						.filter(color => color >= 0)
+						.sort((a,b) => a-b)
+						.reduce((current,next) => current === next ? current+=1 : current , 0)
+			)
+			return graph;
+		}
+		
+		// Создание графа
+		
+		var g = new Graph();
+		
+		g.addNode(1);
+		g.addNode(2);
+		g.addNode(3);
+		g.addNode(4);
+		g.addNode(5);
+		
+		g.addEdge(1,2);
+		g.addEdge(2,3);
+		g.addEdge(2,4);
+		g.addEdge(2,5);
+		g.addEdge(3,4);
+		
+		g = color(g);
+		g.displayGraph()
+		g.displayColors();
+		
+		// Визуализация графа
+		
+		var cy = cytoscape({
+			container: document.getElementById('graph'),
+
+			boxSelectionEnabled: false,
+			autounselectify: true,
+
+			style: cytoscape.stylesheet()
+							.selector('node')
+							.style({
+								'content': 'data(id)'
+							})
+							.selector('edge')
+							.style({
+								'width': 4,
+								'line-color': '#ddd',
+								'target-arrow-color': '#ddd'
+							})
+							.selector('.color1')
+							.style({
+								'background-color': '#168aad'
+							})
+							.selector('.color2')
+							.style({
+								'background-color': '#e76f51'
+							})
+							.selector('.color3')
+							.style({
+								'background-color': '#06d6a0'
+							}),
+				
+			elements: {
+				nodes: [
+					{ data: { id: '1' } },
+					{ data: { id: '2' } },
+					{ data: { id: '3' } },
+					{ data: { id: '4' } },
+					{ data: { id: '5' } }
+				],
+
+				edges: [
+					{ data: { id: 'e1', weight: 1, source: '1', target: '2' } },
+					{ data: { id: 'e3', weight: 1, source: '2', target: '3' } },
+					{ data: { id: 'e4', weight: 1, source: '2', target: '4' } },
+					{ data: { id: 'e5', weight: 1, source: '2', target: '5' } },
+					{ data: { id: 'e6', weight: 1, source: '3', target: '4' } }
+				]
+			}
+		});
+
+		var nodes = cy.filter('node');
+		
+		nodes[0].addClass('color1');
+		nodes[1].addClass('color2');
+		nodes[2].addClass('color1');
+		nodes[3].addClass('color3');
+		nodes[4].addClass('color1');
+	</script>
+</body>
+</html>

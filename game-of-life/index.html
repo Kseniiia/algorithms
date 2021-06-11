@@ -1,0 +1,180 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Модель клеточных автоматов на базе дискретных событий</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="style.css">
+	<script>
+		// Размер сетки
+		var w=20;
+		var k=47;
+		var ile=w*k;
+
+		var s=new Array(2);
+		s[0]=new Array(ile); // Текущее состояние
+		s[1]=new Array(ile); // Следующее состояние
+
+		var akt=0;
+		var nowa=1;
+		var auto=0;
+
+		// Очистка сетки
+		function clean()
+		{
+		  window.status="Загрузка...";
+		  for (i=0; i<ile; i++)
+		  {
+			s[nowa][i]=0;
+		  }
+		  if (akt==0) { akt=1; nowa=0; } else { akt=0; nowa=1; }
+		  window.status="";
+		}
+		// Изменить состояние клетки (живая / мертвая)
+		function swap(nr)
+		{
+		  s[akt][nr]=(s[akt][nr]==0)?1:0;
+		  document.images[nr].src=((s[akt][nr]==1)?"alive.png":"dead.png");
+		}
+		// Нарисовать клетки на сетке
+		function draw()
+		{
+		  for(i=0; i<ile; i++)
+		  {
+			if (s[0][i]!=s[1][i]) // сравнить текущее состояние со следующим
+			{
+			  document.images[i].src=((s[akt][i]==1)?"alive.png":"dead.png");
+			}
+		  }
+		}
+		// Проверка жива ли клетка
+		function alive(nr)
+		{
+		  return(s[akt][nr]);
+		}
+		// Подсчет количества живых соседних клеток
+		function neighbours(nr)
+		{
+		  var cw=Math.floor(nr/k);
+		  var ck=nr % k;
+		  var g=cw>0;
+		  var d=cw<(w-1);
+		  var l=ck>0;
+		  var p=ck<(k-1);
+		  return((g?alive(nr-k):0)+(d?alive(nr+k):0)+(l?alive(nr-1):0)+(p?alive(nr+1):0)+
+			((g&&l)?alive(nr-k-1):0)+((g&&p)?alive(nr-k+1):0)+((d&&l)?alive(nr+k-1):0)+
+			((d&&p)?alive(nr+k+1):0));
+		}
+		// Шаг игры
+		function move(cc)
+		{
+		  window.status="Загрузка...";
+		  for(c=0; c<cc; c++)
+		  {
+			for (i=0; i<ile; i++)
+			{
+			  // если у живой клетки есть две или три живые соседки, то эта клетка продолжает жить;
+			  // в противном случае клетка умирает («от одиночества» или «от перенаселённости»)
+			  if (alive(i))
+			  {
+				iles=neighbours(i);
+				s[nowa][i]=((iles==2) || (iles==3))?1:0;
+			  }
+			  else
+			  {
+				s[nowa][i]=(neighbours(i)==3)?1:0;
+			  }
+			}
+			if (akt==0) { akt=1; nowa=0; } else { akt=0; nowa=1; }
+			draw();
+		  }
+		  window.status="";
+		}
+		// Начальная расстановка клеток
+		function initialize()
+		{
+		  swap(1);
+		  swap(2+k);
+		  swap(2*k);
+		  swap(2*k+1);
+		  swap(2*k+2);
+		}
+		// Сделать шаг в автоматической игре
+		function gamemove()
+		{
+		  if (auto==1)
+		  {
+			move(1);
+			setTimeout("gamemove();",document.getElementsByName("interval")[0].value);
+		  }
+		}
+		// Начать автоматическую игру
+		function game()
+		{
+		  if (auto==0)
+		  {
+			auto=1;
+			gamemove();
+			document.getElementsByName("autop")[0].value="Стоп";
+		  }
+		  else
+		  {
+			 auto=0;
+			 document.getElementsByName("autop")[0].value="Старт";
+		  }
+		}
+	</script>
+</head>
+<body onload="clean(); initialize();">
+	<table id="tmain">
+		<tr>
+			<td class="tright">
+				<h1>Модель клеточных автоматов на базе дискретных событий</h1>
+
+				<form id="control" action="">
+					<p class="center">
+						<input type="button" value="Инициализировать" onclick="clean(); draw(); initialize();">
+						&nbsp;&nbsp;
+						<input type="button" value="Очистить" onclick="clean(); draw();">
+					</p>
+
+					<script>
+						// Визуализация сетки
+						document.write("<table style='margin-left: auto; margin-right: auto; margin-top: 15px;' cellspacing='0' cellpadding='0'>");
+						for (i=0; i<w; i++)
+						{
+						  document.write("<tr>");
+						  for (j=0; j<k; j++)
+						  {
+							document.write("<td><a href='javascript:swap("+(k*i+j)+");'><img src='dead.png' border='0' width='20' height='20'></a></td>");
+						  }
+						  document.write("</tr>");
+						}
+						document.write("</table>");
+					</script>
+
+					<p class="center">
+						<input type="button" value="1 шаг" onclick="move(1);">
+						&nbsp;&nbsp;
+						<input type="button" value="5 шагов" onclick="move(5);">
+						&nbsp;&nbsp;
+						<input type="button" value="10 шагов" onclick="move(10);">
+					</p>
+
+					<p class="center">
+						<input type="button" name="autop" value="Старт" onclick="game();"/>
+						интервал между шагами
+						<select name="interval">
+							<option value="125">1/8 сек</option>
+							<option value="250">1/4 сек</option>
+							<option value="500" selected="selected">1/2 сек</option>
+							<option value="1000">1 сек</option>
+							<option value="2000">2 сек</option>
+						</select>
+					</p>
+				</form>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>
